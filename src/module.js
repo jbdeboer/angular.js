@@ -1,5 +1,9 @@
 'use strict';
 
+goog.provide('angular.module');
+
+goog.require('angular');
+
 /**
  *
  * @param {string} name

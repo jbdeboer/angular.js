@@ -2,6 +2,8 @@
 
 goog.require('angular.coreModule');
 goog.require('angular.core.Block');
+goog.require('angular.core.$Anchor');
+goog.require('angular.injector');
 
 goog.provide('angular.core.$Block');
 

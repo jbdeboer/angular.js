@@ -1,5 +1,9 @@
 'use strict';
 
+goog.provide('angular.injector');
+
+goog.require('angular.apis');
+
 /**
  * @typedef { Function|Array }
  */
@@ -340,7 +344,7 @@ function createInjector(modulesToLoad) {
 
       Constructor.prototype = (isArray(Type) ? Type[Type.length - 1] : Type).prototype;
       instance = new Constructor();
-      returnedValue = /** @type Object */ this.invoke(Type, instance);
+      returnedValue = /** @type Object */ (this.invoke(Type, instance));
 
       return isObject(returnedValue) ? returnedValue : instance;
     },
@@ -768,13 +772,12 @@ function createInjector(modulesToLoad) {
         pInstances = {
           '$injector': [this],
           '$provide': [{
-            // TODO(vojta): unquote the method names
-            'provider': supportObject(provider),
-            'factory': supportObject(factory),
-            'service': supportObject(service),
-            'value': supportObject(value),
-            'constant': supportObject(constant),
-            'decorator': decorator
+            provider: supportObject(provider),
+            factory: supportObject(factory),
+            service: supportObject(service),
+            value: supportObject(value),
+            constant: supportObject(constant),
+            decorator: decorator
           }]
         },
         parent = new TerminalInjector();
@@ -847,7 +850,7 @@ function createInjector(modulesToLoad) {
       var instance = provider_;
       if (isFunction(provider_)) {
         /** @constructor */
-        var Provider = /** @type function(new:Provider) */ provider_;
+        var Provider = /** @type function(new:Provider) */ (provider_);
         instance = providerInjector.instantiate(Provider);
       }
       if (!instance.$get) {
