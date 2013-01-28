@@ -20,3 +20,17 @@ angular.core.module = angular.module('core', []).
 
 //TODO(misko): clean up
 angular.module('ng');
+/**
+ * @param {*} arg
+ */
+function jqLite(arg) {
+  throw Error('No jqLite provided');
+}
+
+/**
+ * @param {string} name
+ * @param {*=} value
+ */
+jqLite.prototype.prop = function(name, value) {
+  throw Error();
+}
