@@ -183,11 +183,27 @@ describe('dte.compiler', function() {
       };
       Two.$transclude = '.';
 
-      $provide.value({ 'directive:[one]': One, 'directive:[two]': Two });
+      var Three = function($anchor) {
+        this.attach = function(scope) {
+          var block = $anchor.newBlock();
+          var childScope = scope.$new();
+
+          childScope.test = childScope.test + 1;
+          block.insertAfter($anchor);
+          block.attach(childScope);
+        }
+      };
+      Three.$transclude = '.';
+
+      $provide.value({
+        'directive:[one]': One,
+        'directive:[two]': Two,
+        'directive:[three]': Three
+      });
     });
     inject(function($compile) {
       var element = angular.element(
-          '<div><span two one>{{test}}</span></div>');
+          '<div><b>prefix<span two one three>{{test}}</span>sufix</b></div>');
       var block = $compile(element)(element);
 
       $rootScope.test = 0;
@@ -195,12 +211,18 @@ describe('dte.compiler', function() {
       $rootScope.$apply();
 
       expect(htmlIdClean(element)).toEqual(
-        '<div class="__ng_ID">' +
-          '<!--[one]-->' +
-            '<!--[two]-->' +
-              '<span two="" one="" class="__ng_ID">2</span>' +
-            '<!--[/two]-->' +
-          '<!--[/one]-->' +
+        '<div>' +
+          '<b class="__ng_ID">' +
+            'prefix' +
+            '<!--[one]-->' +
+              '<!--[two]-->' +
+                '<!--[three]-->' +
+                  '<span two="" one="" three="" class="__ng_ID">3</span>' +
+                '<!--[/three]-->' +
+              '<!--[/two]-->' +
+            '<!--[/one]-->' +
+            'sufix' +
+          '</b>' +
         '</div>');
     });
   });

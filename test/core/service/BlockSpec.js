@@ -101,7 +101,33 @@ describe('Block', function() {
 
         anchor.addExisting(block);
         block.remove();
-      })
+      });
+
+      it('should remove', function() {
+        a.remove();
+        b.remove();
+
+        var outterAnchor;
+        function Directive($anchor) {
+          outterAnchor = $anchor;
+        }
+
+        var innerTemplate = $template('<b>text</b>');
+        var outterTemplate = $template('<!--start--><!--end-->', [
+          ['>0', [Directive, '', innerTemplate]]
+        ]);
+
+        var outterBlock = outterTemplate();
+
+        outterBlock.insertAfter(anchor);
+        outterAnchor.newBlock().insertAfter(outterAnchor);
+
+        expect($rootElement.text()).toEqual('text');
+
+        outterBlock.remove();
+
+        expect($rootElement.text()).toEqual('');
+      });
     });
 
 

@@ -10,7 +10,9 @@ goog.provide('angular.core.$Block');
 angular.core.Block.attrAccessor = function(element, name) {
   return function(value) {
     return arguments.length
-        ? element.setAttribute(name, value)
+        ? value
+            ? element.setAttribute(name, value)
+            : element.removeAttribute(name)
         : element.getAttribute(name);
   };
 };
@@ -115,7 +117,7 @@ angular.core.Block.BLOCK_DYNAMIC_SERVICES = {
 angular.core.Block.emptyInjector = createInjector();
 
 angular.core.module.factory('$Block', ['$exceptionHandler', '$Anchor', '$directiveInjector', '$injector',
-  function($exceptionHandler,   $Anchor, $directiveInjector, $injector) {
+  function($exceptionHandler, $Anchor, $directiveInjector, $injector) {
     function Block(elements, directiveDefs, blocksForAnchors) {
       this.elements = elements;
       this.previous = this.next = null;
@@ -223,6 +225,9 @@ angular.core.module.factory('$Block', ['$exceptionHandler', '$Anchor', '$directi
         // Attach directives
         for(var directives = this.directives, i = 0, ii = directives.length; i < ii; i++) {
           try {
+            for (var j = 0, jj = this.elements.length; j < jj; j++) {
+              this.elements[j].$scope = scope;
+            }
             if (directives[i].attach) directives[i].attach(scope);
           } catch(e) {
             $exceptionHandler(e);
@@ -290,6 +295,12 @@ angular.core.module.factory('$Block', ['$exceptionHandler', '$Anchor', '$directi
 
         function removeDomElements() {
           for(var j = 0, jj = elements.length; j < jj; j++) {
+            var current = elements[j],
+                next = elements[j+1];
+
+            while(next && current.nextSibling != next) {
+              parent.removeChild(current.nextSibling);
+            }
             parent.removeChild(elements[j]);
           }
         }

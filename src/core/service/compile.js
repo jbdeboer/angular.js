@@ -42,8 +42,7 @@ angular.core.module.factory('$compile', ['$template', '$directiveInjector',
       for(var i = 0, ii = elements.length; i < ii ; i++) {
         var node = elements[i],
             elementDirectivesDecl,
-            compileChildren = true,
-            nodeId = null;
+            compileChildren = true;
 
         if (elementDirectivesDecls) {
           elementDirectivesDecl = elementDirectivesDecls[i];
@@ -113,13 +112,14 @@ angular.core.module.factory('$compile', ['$template', '$directiveInjector',
                 // if we have a parent then replace current node with pseudo nodes
                 parent.insertBefore(pseudoStart, node);
                 parent.replaceChild(pseudoEnd, node);
+                nodeId = markNode(pseudoStart, i);
               } else {
                 // we have no parent, which means we are the root of a template.
                 // we need to update the template which was feed to us.
                 elements.splice(i, 1, pseudoStart, pseudoEnd);
+                nodeId = markNode(pseudoStart, i);
                 i++; // correct index to skip the pseudoEnd.
               }
-              nodeId = markNode(pseudoStart, 0);
               i++, ii++; // compensate for new bogus ending element;
               transcludedElementDirectivesDecl = [ elementDirectivesDecl.slice(k + 1) ];
             } else {
