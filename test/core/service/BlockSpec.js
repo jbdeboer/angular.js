@@ -96,6 +96,40 @@ describe('Block', function() {
         expect(b.next).toBe(null);
         expect(b.previous).toBe(anchor);
       });
+
+      it('should remove free standing block', function() {
+        $rootElement.html('<div><span class="b"></span></div>')
+        var block = $template('.b')('.b');
+
+        anchor.addExisting(block);
+        block.remove();
+      });
+
+      it('should remove', function() {
+        a.remove();
+        b.remove();
+
+        var outterAnchor;
+        function Directive($anchor) {
+          outterAnchor = $anchor;
+        }
+
+        var innerTemplate = $template('<b>text</b>');
+        var outterTemplate = $template('<!--start--><!--end-->', [
+          ['>0', [Directive, '', innerTemplate]]
+        ]);
+
+        var outterBlock = outterTemplate();
+
+        outterBlock.insertAfter(anchor);
+        outterAnchor.newBlock().insertAfter(outterAnchor);
+
+        expect($rootElement.text()).toEqual('text');
+
+        outterBlock.remove();
+
+        expect($rootElement.text()).toEqual('');
+      });
     });
 
 

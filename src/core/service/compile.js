@@ -102,13 +102,14 @@ angular.core.Compile.factory = function($blockTypeFactory, $directiveInjector) {
               } else {
                 parent.replaceChild(pseudoEnd, node);
               }
+              nodeId = markNode(pseudoStart, i);
             } else {
               // we have no parent, which means we are the root of a template.
               // we need to update the template which was feed to us.
               elements.splice(i, 1, pseudoStart, pseudoEnd);
+              nodeId = markNode(pseudoStart, i);
               i++; // correct index to skip the pseudoEnd.
             }
-            nodeId = markNode(pseudoStart, 0);
             i++, ii++; // compensate for new bogus ending element;
             transcludedDirectiveInfos = nodeDirectiveInfos.slice(k + 1);
           } else {
