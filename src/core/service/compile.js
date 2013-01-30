@@ -164,7 +164,7 @@ angular.core.Compile.factory = function($blockTypeFactory, $directiveInjector) {
       var DirectiveType  = $directiveInjector.get(directiveInfo.selector);
 
       if (DirectiveType.$generate) {
-        var generatedDirectives = DirectiveType.$generate(directiveInfo.value);
+        var generatedDirectives = DirectiveType.$generate(directiveInfo.value, node);
         Array.isArray(Array);
 
         for (var k = 0, kk = generatedDirectives.length; k < kk; k++) {

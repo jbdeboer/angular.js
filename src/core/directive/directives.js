@@ -125,11 +125,11 @@ angular.core.directive.Repeat = function($anchor, $value, $service_$parse) {
   itemSetter = $service_$parse($value[0]).assign;
 
   this.attach = function(scope) {
-    var previousBlockMap = new HashMap();
+    var previousBlockMap = new angular.HashMap();
 
     scope.$watch(function() {
       var collection = collectionGetter(scope) || EMPTY_ARRAY,
-          currentBlockMap = new HashMap(),
+          currentBlockMap = new angular.HashMap(),
           i, ii = collection.length,
           value, block, previousBlock,
           iterationScope;
