@@ -6,6 +6,7 @@ goog.require('angular.core.module');
 goog.require('angular.core.Scope');
 goog.require('angular.core.$Anchor');
 goog.require('angular.core.Directive');
+goog.require('angular.HashMap');
 
 angular.core.module.value({
   'directive:[bind]': ['$text', '$value',
@@ -173,11 +174,11 @@ factory('directive:[repeat]', function($parse) {
     itemSetter = $parse(parameter[0]).assign;
 
     this.attach = function(scope) {
-      var previousBlockMap = new HashMap();
+      var previousBlockMap = new angular.HashMap();
 
       scope.$watch(function() {
         var collection = collectionGetter(scope) || EMPTY_ARRAY,
-            currentBlockMap = new HashMap(),
+            currentBlockMap = new angular.HashMap(),
             i, ii = collection.length,
             value, block, previousBlock,
             iterationScope;

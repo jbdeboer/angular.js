@@ -55,7 +55,7 @@ angular.core.module.factory('$compile', ['$template', '$directiveInjector',
             var Directive  = $directiveInjector.get(directiveDecl.selector);
 
             if (Directive.$generate) {
-              var generatedDirectives = Directive.$generate(directiveDecl.value);
+              var generatedDirectives = Directive.$generate(directiveDecl.value, node);
 
               for (var k = 0, kk = generatedDirectives.length; k < kk; k++) {
                 var generatedDirective = generatedDirectives[k],
