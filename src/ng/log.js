@@ -4,8 +4,9 @@ goog.require('angular.core.module');
 goog.require('angular.core.$window');
 
 goog.provide('angular.core.$log');
+goog.provide('angular.core.$LogProvider');
 
-angular.core.module.provider('$log', $LogProvider);
+angular.core.module.provider('$log', angular.core.$LogProvider);
 
 /**
  * @ngdoc object
@@ -41,7 +42,7 @@ angular.core.module.provider('$log', $LogProvider);
    </example>
  */
 
-function $LogProvider(){
+angular.core.$LogProvider = function() {
   this.$get = ['$window', function($window){
     return {
       /**
@@ -119,4 +120,4 @@ function $LogProvider(){
       }
     }
   }];
-}
+};

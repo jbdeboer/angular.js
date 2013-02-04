@@ -16,7 +16,7 @@ goog.provide('angular.core.$interpolate');
  * Used for configuring the interpolation markup. Defaults to `{{` and `}}`.
  * @constructor
  */
-angular.core.module.provider('$interpolate', function $InterpolateProvider() {
+angular.core.module.provider('$interpolate', function() {
   var startSymbol = '{{';
   var endSymbol = '}}';
 

@@ -3,6 +3,7 @@
 goog.require('angular.core.module');
 
 goog.provide('angular.core.$parse');
+goog.provide('angular.core.$ParseProvider');
 
 var OPERATORS = {
     'null':function(){return null;},
@@ -892,15 +893,15 @@ function getterFn(path, csp) {
  *    allows one to set values to expressions.
  *
  */
-angular.core.module.provider('$parse', function $ParseProvider() {
+angular.core.$ParseProvider = function() {
   var cache = {};
   this.$get = ['$filter', '$sniffer', function($filter, $sniffer) {
     return function(exp) {
       switch(typeof exp) {
         case 'string':
           return cache.hasOwnProperty(exp)
-            ? cache[exp]
-            : cache[exp] =  parser(exp, false, $filter, $sniffer['csp']);
+              ? cache[exp]
+              : cache[exp] =  parser(exp, false, $filter, $sniffer['csp']);
         case 'function':
           return exp;
         default:
@@ -908,4 +909,6 @@ angular.core.module.provider('$parse', function $ParseProvider() {
       }
     };
   }];
-});
+};
+
+angular.core.module.provider('$parse', angular.core.$ParseProvider);

@@ -4,14 +4,15 @@ goog.require('angular.core.module');
 goog.require('angular.core.$log');
 
 goog.provide('angular.core.$exceptionHandler');
+goog.provide('angular.core.$ExceptionHandlerProvider');
 
-angular.core.module.provider('$exceptionHandler', $ExceptionHandlerProvider);
+angular.core.module.provider('$exceptionHandler',
+    angular.core.$ExceptionHandlerProvider);
 
 /**
  * @ngdoc function
  * @name ng.$exceptionHandler
  * @requires $log
- * @constructor
  *
  * @description
  * Any uncaught exception in angular expressions is delegated to this service.
@@ -20,8 +21,10 @@ angular.core.module.provider('$exceptionHandler', $ExceptionHandlerProvider);
  *
  * In unit tests, if `angular-mocks.js` is loaded, this service is overridden by
  * {@link ngMock.$exceptionHandler mock $exceptionHandler}
+ *
+ * @constructor
  */
-function $ExceptionHandlerProvider() {
+angular.core.$ExceptionHandlerProvider = function() {
   /**
    * @type {Array}
    */
