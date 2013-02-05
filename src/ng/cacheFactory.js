@@ -8,8 +8,6 @@ goog.provide('angular.core.$CacheFactoryProvider');
 goog.provide('angular.core.$TemplateCacheProvider');
 goog.provide('angular.core.CacheFactoryOptions');
 
-angular.core.module.provider('$cacheFactory', angular.core.$CacheFactoryProvider);
-angular.core.module.provider('$templateCache', angular.core.$TemplateCacheProvider);
 
 
 /**
@@ -197,3 +195,5 @@ angular.core.$TemplateCacheProvider = function() {
   }];
 };
 
+angular.core.module.provider('$cacheFactory', angular.core.$CacheFactoryProvider);
+angular.core.module.provider('$templateCache', angular.core.$TemplateCacheProvider);

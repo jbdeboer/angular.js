@@ -6,7 +6,6 @@ goog.require('angular.core.$window');
 goog.provide('angular.core.$log');
 goog.provide('angular.core.$LogProvider');
 
-angular.core.module.provider('$log', angular.core.$LogProvider);
 
 /**
  * @ngdoc object
@@ -121,3 +120,6 @@ angular.core.$LogProvider = function() {
     }
   }];
 };
+
+angular.core.module.provider('$log', angular.core.$LogProvider);
+

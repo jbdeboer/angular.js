@@ -6,8 +6,6 @@ goog.require('angular.core.$log');
 goog.provide('angular.core.$exceptionHandler');
 goog.provide('angular.core.$ExceptionHandlerProvider');
 
-angular.core.module.provider('$exceptionHandler',
-    angular.core.$ExceptionHandlerProvider);
 
 /**
  * @ngdoc function
@@ -38,4 +36,8 @@ angular.core.$ExceptionHandlerProvider = function() {
       $log.error.apply($log, arguments);
     };
   }];
-}
+};
+
+angular.core.module.provider('$exceptionHandler',
+    angular.core.$ExceptionHandlerProvider);
+
