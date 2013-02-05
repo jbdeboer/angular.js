@@ -118,3 +118,6 @@ angular.core.$LogProvider = function() {
     }
   }];
 };
+
+angular.core.module.provider('$log', angular.core.$LogProvider);
+
