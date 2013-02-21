@@ -406,16 +406,34 @@ function $RootScopeProvider(){
                           ? equals(value, last)
                           : (typeof value == 'number' && typeof last == 'number'
                              && isNaN(value) && isNaN(last)))) {
+                    if (ttl < 5) {
+                      for (var k = 0, kk = current.$$watchers.length; k < kk; k++) {
+                        var other = current.$$watchers[k];
+                        other.lastLocal = other.get(current);
+                        if (other.eq) { other.lastLocal = copy(other.lastLocal); }
+                      }
+                    }
+
                     dirty = true;
                     watch.last = watch.eq ? copy(value) : value;
                     watch.fn(value, ((last === initWatchVal) ? value : last), current);
+                    watch.changedLastIteration = [];
+
                     if (ttl < 5) {
+                      // See what changed.
+                      for (var k = 0, kk = current.$$watchers.length; k < kk; k++) {
+                        var other = current.$$watchers[k];
+                        var valueAfter = other.get(current);
+                        if (valueAfter !== other.lastLocal) {
+                          watch.changedLastIteration.push(other.exp);
+                        }
+                      }
                       logIdx = 4 - ttl;
                       if (!watchLog[logIdx]) watchLog[logIdx] = [];
                       logMsg = (isFunction(watch.exp))
                           ? 'fn: ' + (watch.exp.name || watch.exp.toString())
                           : watch.exp;
-                      logMsg += '; newVal: ' + toJson(value) + '; oldVal: ' + toJson(last);
+                      logMsg = 'Watcher ' + logMsg + ' changed [' + watch.changedLastIteration.join(',') + ']';
                       watchLog[logIdx].push(logMsg);
                     }
                   }

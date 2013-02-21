@@ -213,6 +213,7 @@ describe('Scope', function() {
         $rootScope.$watch('b', function() {$rootScope.a++;});
         $rootScope.a = $rootScope.b = 0;
 
+        /*
         expect(function() {
           $rootScope.$digest();
         }).toThrow('100 $digest() iterations reached. Aborting!\n'+
@@ -222,8 +223,56 @@ describe('Scope', function() {
             '["a; newVal: 98; oldVal: 97","b; newVal: 99; oldVal: 98"],' +
             '["a; newVal: 99; oldVal: 98","b; newVal: 100; oldVal: 99"],' +
             '["a; newVal: 100; oldVal: 99","b; newVal: 101; oldVal: 100"]]');
+        */
 
-        expect($rootScope.$$phase).toBeNull();
+        expect(function() {
+          $rootScope.$digest();
+        }).toThrow('100 $digest() iterations reached. Aborting!\n'+
+            'Watchers fired in the last 5 iterations: ' +
+            '[["Watcher a changed [b]","Watcher b changed [a]"],' +
+            '["Watcher a changed [b]","Watcher b changed [a]"],' +
+            '["Watcher a changed [b]","Watcher b changed [a]"],' +
+            '["Watcher a changed [b]","Watcher b changed [a]"],' +
+            '["Watcher a changed [b]","Watcher b changed [a]"]]');
+
+
+
+            expect($rootScope.$$phase).toBeNull();
+      });
+    });
+
+    it('should prevent infinite recursion for a single watch statement', function() {
+      module(function($rootScopeProvider) {
+        $rootScopeProvider.digestTtl(10);
+      });
+      inject(function($rootScope) {
+        $rootScope.$watch('a', function() {$rootScope.a++});
+        $rootScope.a = 0;
+
+        expect(function() {
+          $rootScope.$digest();
+        }).toThrow(
+          '10 $digest() iterations reached. Aborting!\n' +
+          'Watchers fired in the last 5 iterations: ' +
+          '[["Watcher a changed [a]"],' +
+          '["Watcher a changed [a]"],' +
+          '["Watcher a changed [a]"],' +
+          '["Watcher a changed [a]"],' +
+          '["Watcher a changed [a]"]]');
+      })
+    });
+
+    it('should remember what values changed for the last iteration', function($rootScope) {
+      module(function($rootScopeProvider) {
+        $rootScopeProvider.digestTtl(4);
+      });
+
+      inject(function($rootScope) {
+        $rootScope.$watch('a', function() {$rootScope.c = 6; });
+        $rootScope.$watch('c', function() { });
+        $rootScope.$digest();
+        expect($rootScope.$$watchers[1].changedLastIteration).toEqual(['c']);
+        expect($rootScope.$$watchers[0].changedLastIteration).toEqual([]);
       });
     });
 
@@ -238,7 +287,7 @@ describe('Scope', function() {
         $rootScope.$digest();
         throw Error('Should have thrown exception');
       } catch(e) {
-        expect(e.message.match(/"fn: (watcherA|function)/g).length).toBe(10);
+        expect(e.message.match(/fn: (watcherA|function)/g).length).toBe(10);
       }
     }));
 
