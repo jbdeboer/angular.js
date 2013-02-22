@@ -1,0 +1,115 @@
+<html ng-app>
+<head>
+    <script type="text/javascript" src="build/angular.js"></script>
+
+    <script>
+        var SIZE = 40;
+        function CountCtrl($scope) {
+            function watchRow(x, y) {
+                var xn = x == 0 ? SIZE-1 : x-1;
+                var xp = x == SIZE-1 ? 0 : x+1;
+                var yn = y == 0 ? SIZE-1 : y-1;
+                var yp = y == SIZE-1 ? 0 : y+1;
+
+                var neighbours = [[xn,yn], [x,yn], [xp,yn],
+                    [xn, y],         [xp, y],
+                    [xn,yp], [x,yp], [xp,yp]];
+
+                function run() {
+                    var numNeighbours = 0;
+                    for (var i = 0; i < neighbours.length; i++) {
+                        var xy = neighbours[i];
+                        if ($scope.rows[xy[0]][xy[1]] == 'black') {
+                            numNeighbours++;
+                        }
+                    }
+                    //if (x == 1 && y == 1) { debugger; }
+                    var wasAlive = $scope.rows[x][y] == 'black';
+                    if (numNeighbours < 2) {
+                        $scope.rows[x][y] = 'white';
+                    } else if (numNeighbours > 3) {
+                        $scope.rows[x][y] = 'white';
+                    } else if (numNeighbours == 3) {
+                        $scope.rows[x][y] = 'black';
+                    }
+                    var stillAlive = $scope.rows[x][y] == 'black';
+
+                    if (wasAlive && !stillAlive) {
+                        $scope.numAlive--;
+                    }
+                    if (!wasAlive && stillAlive) {
+                        $scope.numAlive++;
+                    }
+
+                }
+
+                for (var i = 0; i < neighbours.length; i++) {
+                  var xy = neighbours[i];
+                  $scope.$watch('rows[' + xy[0] + '][' + xy[1] + ']', function() {
+                    run();
+                  });
+                }
+            }
+
+            $scope.count = 4;
+            $scope.totalTiles = SIZE * SIZE;
+            $scope.percentWhite = 50;
+            var lastRestart = 0;
+            var firstStart = true;
+            function restartLife(percentWhite) {
+              $scope.numAlive = 0;
+              $scope.rows = new Array(SIZE);
+              for (var i = 0; i < SIZE; i++) {
+                $scope.rows[i] = new Array(SIZE);
+                for (var j = 0; j < SIZE; j++) {
+                  var color = (Math.random()) < (percentWhite / 100) ? 'black' : 'white';
+                  if (color == 'black') {
+                      $scope.numAlive++;
+                  }
+                  $scope.rows[i][j] = color;
+                  if (firstStart) { watchRow(i, j); }
+                }
+              }
+              firstStart = false;
+            }
+
+            $scope.$watch('count', function() {
+                if (!$scope.count) { $scope.count = 1;}
+                $scope.count++;
+            });
+            $scope.$watch('newCount', function() {
+                $scope.count = $scope.newCount;
+            });
+            $scope.$watch('percentWhite', function() {
+                if ($scope.percentWhite != lastRestart) {
+                  restartLife($scope.percentWhite);
+                  lastRestart = $scope.percentWhite;
+                }
+            });
+        }
+    </script>
+</head>
+<body ng-controller="CountCtrl">
+<h1>Count Up</h1>
+
+<div ng-repeat="row in rows" style="height:10">
+    <img height=10 width=10 ng-repeat="col in row" ng-bind="col" style="background-color: black" ng-style="{backgroundColor: col}">{{col}}</img>
+</div>
+
+</div>
+<br/><br/>
+<div style="height:4em">
+{{count}}
+</div>
+<div>Black tiles: {{numAlive}}  ({{numAlive / totalTiles * 100}} %)</div>
+
+<div>
+    <label for="in">Counter Start</label>
+<input id="in" type="text" ng-model="newCount"/>
+    </div>
+<div>
+    <label for="pw">Percent White - Game of Life</label>
+    <input id="pw" type="text" ng-model="percentWhite"/>
+</div>
+</body>
+</html>

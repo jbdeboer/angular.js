@@ -458,7 +458,12 @@ function $RootScopeProvider(){
             throw Error(TTL + ' $digest() iterations reached. Aborting!\n' +
                 'Watchers fired in the last 5 iterations: ' + toJson(watchLog));
           }
-        } while (dirty || asyncQueue.length);
+          if (dirty || asyncQueue.length) {
+            clearPhase();
+            var self = this;
+            window.setTimeout(function() { self.$digest();}, 20);
+          }
+        } while (false && (dirty || asyncQueue.length));
 
         clearPhase();
       },
