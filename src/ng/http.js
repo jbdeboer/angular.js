@@ -196,6 +196,9 @@ function $HttpProvider() {
       reversedInterceptors.splice(index, 0, {
         response: function(response) {
           return responseFn($q.when(response));
+        },
+        responseError: function(response) {
+          return responseFn($q.reject(response));
         }
       });
     });

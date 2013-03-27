@@ -28,6 +28,29 @@ describe('$http', function() {
 
   describe('$httpProvider', function() {
     describe('interceptors', function() {
+     it('should accept injected rejected response interceptor', function() {
+        var wasCalled = false;
+        module(function($httpProvider, $provide) {
+          $httpProvider.responseInterceptors.push('injectedInterceptor');
+          $provide.factory('injectedInterceptor', ['$q', function($q) {
+            return function(promise) {
+              return promise.then(null, function authInterceptor(response) {
+                wasCalled = true;
+                expect(response.status).toEqual(401);
+                return $q.reject(response);
+              });
+            };
+          }]);
+        });
+        inject(function($http, $httpBackend) {
+          $httpBackend.expect('GET', '/url').respond(401);
+          $http({method: 'GET', url: '/url'});
+          $httpBackend.flush();
+          expect(wasCalled).toEqual(true);
+        });
+      });
+
+
       it('should chain request, requestReject, response and responseReject interceptors', function() {
         module(function($httpProvider) {
           var savedConfig, savedResponse;
