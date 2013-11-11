@@ -68,6 +68,15 @@ function $RootScopeProvider(){
   var TTL = 10;
   var $rootScopeMinErr = minErr('$rootScope');
 
+  var WTFScopeApply = WTF.trace.events.createScope('apply(ascii expr)');
+  var WTFWatcher = WTF.trace.events.createScope('check-watch(ascii expr)');
+  var WTFAsync = WTF.trace.events.createScope('digest-async');
+  var WTFWatchFn = WTF.trace.events.createInstance('watch-fn');
+  var WTFAdvCurrent = WTF.trace.events.createInstance('adv-current');
+  var WTFScopeDigest = WTF.trace.events.createScope('digest');
+  var WTFScopeDigestScope = WTF.trace.events.createScope('digest-child-scope(uint8 watchers)');
+  var WTFScopeDigestDirty = WTF.trace.events.createScope('digest-dirty-loop(uint8 iter)');
+
   this.digestTtl = function(value) {
     if (arguments.length) {
       TTL = value;
@@ -509,12 +518,19 @@ function $RootScopeProvider(){
             watchLog = [],
             logIdx, logMsg, asyncTask;
 
+        var wtfScope = WTFScopeDigest();
         beginPhase('$digest');
+        var iter = 0;
 
         do { // "while dirty" loop
+          var wtfDirty = WTFScopeDigestDirty(iter++);
           dirty = false;
           current = target;
 
+          var al = asyncQueue.length;
+          if (al) {
+            var wtfAsync = WTFAsync(al);
+          }
           while(asyncQueue.length) {
             try {
               asyncTask = asyncQueue.shift();
@@ -523,21 +539,30 @@ function $RootScopeProvider(){
               $exceptionHandler(e);
             }
           }
+          if (al) {
+            WTF.trace.leaveScope(wtfAsync);
+          }
 
           do { // "traverse the scopes" loop
+
             if ((watchers = current.$$watchers)) {
               // process our watches
               length = watchers.length;
+              var wtfChildScope = WTFScopeDigestScope(length);
               while (length--) {
+
                 try {
                   watch = watchers[length];
+                  var wtfWatcher = WTFWatcher(watch.exp);
+
                   // Most common watches are on primitives, in which case we can short
                   // circuit it with === operator, only when === fails do we use .equals
                   if (watch && (value = watch.get(current)) !== (last = watch.last) &&
                       !(watch.eq
                           ? equals(value, last)
-                          : (typeof value == 'number' && typeof last == 'number'
+                          : (typeof value === 'number' && typeof last === 'number'
                              && isNaN(value) && isNaN(last)))) {
+                    var wtfWatchFn = WTFWatchFn(watch.exp);
                     dirty = true;
                     watch.last = watch.eq ? copy(value) : value;
                     watch.fn(value, ((last === initWatchVal) ? value : last), current);
@@ -550,13 +575,18 @@ function $RootScopeProvider(){
                       logMsg += '; newVal: ' + toJson(value) + '; oldVal: ' + toJson(last);
                       watchLog[logIdx].push(logMsg);
                     }
+                    //WTF.trace.leaveScope(wtfWatchFn);
                   }
                 } catch (e) {
                   $exceptionHandler(e);
                 }
+                WTF.trace.leaveScope(wtfWatcher);
               }
+              WTF.trace.leaveScope(wtfChildScope);
+
             }
 
+            var advCurrent = WTFAdvCurrent();
             // Insanity Warning: scope depth-first traversal
             // yes, this code is a bit crazy, but it works and we have tests to prove it!
             // this piece should be kept in sync with the traversal in $broadcast
@@ -565,16 +595,20 @@ function $RootScopeProvider(){
                 current = current.$parent;
               }
             }
+            //WTF.trace.leaveScope(advCurrent);
           } while ((current = next));
 
           if(dirty && !(ttl--)) {
+            WTF.trace.leaveScope(wtfScope);
             clearPhase();
             throw $rootScopeMinErr('infdig',
                 '{0} $digest() iterations reached. Aborting!\nWatchers fired in the last 5 iterations: {1}',
                 TTL, toJson(watchLog));
           }
+          WTF.trace.leaveScope(wtfDirty);
         } while (dirty || asyncQueue.length);
 
+        WTF.trace.leaveScope(wtfScope);
         clearPhase();
 
         while(postDigestQueue.length) {
@@ -766,12 +800,14 @@ function $RootScopeProvider(){
        */
       $apply: function(expr) {
         try {
+          var wtfScope = WTFScopeApply(expr);
           beginPhase('$apply');
           return this.$eval(expr);
         } catch (e) {
           $exceptionHandler(e);
         } finally {
           clearPhase();
+          WTF.trace.leaveScope(wtfScope);
           try {
             $rootScope.$digest();
           } catch (e) {
@@ -961,19 +997,25 @@ function $RootScopeProvider(){
 
     var $rootScope = new Scope();
 
+    var phaseWTFScopeFactory = WTF.trace.events.createScope('scope(ascii phase)');
+
     return $rootScope;
 
 
     function beginPhase(phase) {
+
+
       if ($rootScope.$$phase) {
         throw $rootScopeMinErr('inprog', '{0} already in progress', $rootScope.$$phase);
       }
 
       $rootScope.$$phase = phase;
+      $rootScope.$$WTFphase = phaseWTFScopeFactory(phase);
     }
 
     function clearPhase() {
       $rootScope.$$phase = null;
+      WTF.trace.leaveScope($rootScope.$$WTFphase);
     }
 
     function compileToFn(exp, name) {
