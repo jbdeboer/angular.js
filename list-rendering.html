@@ -1,0 +1,55 @@
+<html ng-app>
+<head>
+<script src="build/angular.js">
+</script>
+<script>
+function GoTime($scope) {
+  $scope.hello = "hiya";
+
+  $scope.running = false;
+  $scope.btnText = "Go";
+
+  $scope.count = 5000;
+
+  $scope.toggle = function() {
+  	if ($scope.running) {
+  		$scope.running = false;
+  		$scope.btnText = "Go";
+  	} else {
+  		$scope.running = true;
+  		$scope.btnText = "Pause";
+
+  		window.requestAnimationFrame(rand);
+  	}
+  }
+  	$scope.toggle();
+
+  function rand() {
+  	if (!$scope.running) return;
+
+    $scope.rs = [];
+    $scope.$apply();
+
+  	var rs = [];
+  	var x = 0;
+  	for (var i = 0, ii = $scope.count; i < ii; i++) {
+  		x++;
+  		rs.push("" + (Math.random() > 0.5 ? "-" : "|"));
+  	}
+  	$scope.rs = rs;
+  	$scope.$apply();
+
+  	window.requestAnimationFrame(rand);
+  }
+}
+</script>
+
+</head>
+<body ng-controller="GoTime">
+Will re-render a {{count}} element list in a loop
+<button ng-click="toggle()">{{btnText}}</button>
+<div>
+<span ng-repeat="r in rs track by $index" ng-bind="r"></span>
+</div>
+</body>
+</html>

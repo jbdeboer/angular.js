@@ -257,6 +257,9 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
 
         //watch props
         $scope.$watchCollection(rhs, function ngRepeatAction(collection){
+          var st = window.performance.now();
+          var nst;
+          var times = [];
           var index, length,
               previousNode = $element[0],     // current position of the node
               nextNode,
@@ -273,6 +276,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
               nextBlockOrder = [],
               elementsToRemove;
 
+          times.push(("1: " + ((nst = window.performance.now()) - st)).substr(0,10)); st = nst;
 
           if (isArrayLike(collection)) {
             collectionKeys = collection;
@@ -290,6 +294,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
           }
 
           arrayLength = collectionKeys.length;
+          times.push(("2: " + ((nst = window.performance.now()) - st)).substr(0,10)); st = nst;
 
           // locate existing items
           length = nextBlockOrder.length = collectionKeys.length;
@@ -318,6 +323,9 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
            }
          }
 
+          times.push(("3: " + ((nst = window.performance.now()) - st)).substr(0,10)); st = nst;
+
+          var dieScopes = [];
           // remove existing items
           for (key in lastBlockMap) {
             // lastBlockMap is our own object so we don't need to use special hasOwnPropertyFn
@@ -326,9 +334,22 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
               elementsToRemove = getBlockElements(block.clone);
               $animate.leave(elementsToRemove);
               forEach(elementsToRemove, function(element) { element[NG_REMOVED] = true; });
-              block.scope.$destroy();
+              dieScopes.push(block.scope);
             }
           }
+          times.push(("rm: " + ((nst = window.performance.now()) - st)).substr(0,10)); st = nst;
+
+
+          for (var i = 0, ii = dieScopes.length; i < ii; i++) {
+              dieScopes[i].$destroy();
+          }
+
+          times.push(("rmS: " + ((nst = window.performance.now()) - st)).substr(0,10)); st = nst;
+
+          var cLen = collectionKeys.length;
+          var newScopes = 0;
+          var transcludeScopes = [];
+          var transcludeClosures = [];
 
           // we are not using forEach for perf reasons (trying to avoid #call)
           for (index = 0, length = collectionKeys.length; index < length; index++) {
@@ -355,6 +376,7 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
             } else {
               // new item which we don't know about
               childScope = $scope.$new();
+              newScopes++;
             }
 
             childScope[valueIdentifier] = value;
@@ -368,6 +390,8 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
             // jshint bitwise: true
 
             if (!block.scope) {
+              //transcludeScopes.push(childScope);
+              //transcludeClosures.push(function(clone) {
               $transclude(childScope, function(clone) {
                 clone[clone.length++] = document.createComment(' end ngRepeat: ' + expression + ' ');
                 $animate.enter(clone, null, jqLite(previousNode));
@@ -381,11 +405,22 @@ var ngRepeatDirective = ['$parse', '$animate', function($parse, $animate) {
               });
             }
           }
+          times.push(("nS: " + ((nst = window.performance.now()) - st)).substr(0,10)); st = nst;
+
+          //for (var i = 0, ii = transcludeScopes.length; i < ii; i++) {
+          //  $transclude(transcludeScopes[i], transcludeClosures[i]);
+          //}
+
+
+
           lastBlockMap = nextBlockMap;
+          times.push(("trans: " + ((nst = window.performance.now()) - st)).substr(0,10)); st = nst;
+
+          console.log(times);
         });
     }
   };
-
+  
   function getBlockStart(block) {
     return block.clone[0];
   }
