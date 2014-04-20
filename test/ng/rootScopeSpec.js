@@ -107,10 +107,10 @@ describe('Scope', function() {
 
     it('should not keep constant expressions on watch queue', inject(function($rootScope) {
       $rootScope.$watch('1 + 1', function() {});
-      expect($rootScope.$$watchers.length).toEqual(1);
+      expect($rootScope.$$.watchers.length).toEqual(1);
       $rootScope.$digest();
 
-      expect($rootScope.$$watchers.length).toEqual(0);
+      expect($rootScope.$$.watchers.length).toEqual(0);
     }));
 
 
@@ -132,7 +132,7 @@ describe('Scope', function() {
         $rootScope.$watch('a', function() {throw new Error('abc');});
         $rootScope.a = 1;
         try { $rootScope.$digest(); } catch(e) { }
-        expect($rootScope.$$phase).toBeNull();
+        expect($rootScope.$$.phase).toBeNull();
       });
     });
 
@@ -238,7 +238,7 @@ describe('Scope', function() {
             '["a; newVal: 99; oldVal: 98","b; newVal: 100; oldVal: 99"],' +
             '["a; newVal: 100; oldVal: 99","b; newVal: 101; oldVal: 100"]]');
 
-        expect($rootScope.$$phase).toBeNull();
+        expect($rootScope.$$.phase).toBeNull();
       });
     });
 
@@ -278,7 +278,7 @@ describe('Scope', function() {
           }).toThrowMinErr('$rootScope', 'infdig', '10 $digest() iterations reached. Aborting!\n'+
                   'Watchers fired in the last 5 iterations: []');
 
-          expect($rootScope.$$phase).toBeNull();
+          expect($rootScope.$$.phase).toBeNull();
       });
       });
 
@@ -804,7 +804,7 @@ describe('Scope', function() {
       $rootScope.$digest();
       expect(log).toEqual('123');
       expect(spy).toHaveBeenCalled();
-      expect($rootScope.$$destroyed).toBe(true);
+      expect($rootScope.$$.destroyed).toBe(true);
     }));
 
 
@@ -856,7 +856,7 @@ describe('Scope', function() {
     }));
 
 
-    it('should decrement ancestor $$listenerCount entries', inject(function($rootScope) {
+    it('should decrement ancestor $$.listenerCount entries', inject(function($rootScope) {
       var EVENT = 'fooEvent',
           spy = jasmine.createSpy('listener'),
           firstSecond = first.$new();
@@ -865,13 +865,13 @@ describe('Scope', function() {
       firstSecond.$on(EVENT, spy);
       middle.$on(EVENT, spy);
 
-      expect($rootScope.$$listenerCount[EVENT]).toBe(3);
-      expect(first.$$listenerCount[EVENT]).toBe(2);
+      expect($rootScope.$$.listenerCount[EVENT]).toBe(3);
+      expect(first.$$.listenerCount[EVENT]).toBe(2);
 
       firstSecond.$destroy();
 
-      expect($rootScope.$$listenerCount[EVENT]).toBe(1);
-      expect(first.$$listenerCount[EVENT]).toBeUndefined();
+      expect($rootScope.$$.listenerCount[EVENT]).toBe(1);
+      expect(first.$$.listenerCount[EVENT]).toBeUndefined();
 
       $rootScope.$broadcast(EVENT);
       expect(spy.callCount).toBe(1);
@@ -1062,9 +1062,9 @@ describe('Scope', function() {
       childScope.$evalAsync('childExpression');
       isolateScope.$evalAsync('isolateExpression');
 
-      expect(childScope.$$asyncQueue).toBe($rootScope.$$asyncQueue);
-      expect(isolateScope.$$asyncQueue).toBe($rootScope.$$asyncQueue);
-      expect($rootScope.$$asyncQueue).toEqual([
+      expect(childScope.$$.asyncQueue).toBe($rootScope.$$.asyncQueue);
+      expect(isolateScope.$$.asyncQueue).toBe($rootScope.$$.asyncQueue);
+      expect($rootScope.$$.asyncQueue).toEqual([
         {scope: $rootScope, expression: 'rootExpression'},
         {scope: childScope, expression: 'childExpression'},
         {scope: isolateScope, expression: 'isolateExpression'}]);
@@ -1165,7 +1165,7 @@ describe('Scope', function() {
 
         expect($exceptionHandler.errors[0]).toBeDefined();
 
-        expect($rootScope.$$phase).toBeNull();
+        expect($rootScope.$$.phase).toBeNull();
       });
     });
 
@@ -1278,22 +1278,22 @@ describe('Scope', function() {
       }));
 
 
-      it('should increment ancestor $$listenerCount entries', inject(function($rootScope) {
+      it('should increment ancestor $$.listenerCount entries', inject(function($rootScope) {
         var child1 = $rootScope.$new(),
             child2 = child1.$new(),
             spy = jasmine.createSpy();
 
         $rootScope.$on('event1', spy);
-        expect($rootScope.$$listenerCount).toEqual({event1: 1});
+        expect($rootScope.$$.listenerCount).toEqual({event1: 1});
 
         child1.$on('event1', spy);
-        expect($rootScope.$$listenerCount).toEqual({event1: 2});
-        expect(child1.$$listenerCount).toEqual({event1: 1});
+        expect($rootScope.$$.listenerCount).toEqual({event1: 2});
+        expect(child1.$$.listenerCount).toEqual({event1: 1});
 
         child2.$on('event2', spy);
-        expect($rootScope.$$listenerCount).toEqual({event1: 2, event2: 1});
-        expect(child1.$$listenerCount).toEqual({event1: 1, event2: 1});
-        expect(child2.$$listenerCount).toEqual({event2: 1});
+        expect($rootScope.$$.listenerCount).toEqual({event1: 2, event2: 1});
+        expect(child1.$$.listenerCount).toEqual({event1: 1, event2: 1});
+        expect(child2.$$.listenerCount).toEqual({event2: 1});
       }));
 
 
@@ -1315,39 +1315,39 @@ describe('Scope', function() {
           child.$emit('abc');
           child.$broadcast('abc');
           expect(log).toEqual('XX');
-          expect($rootScope.$$listenerCount['abc']).toBe(1);
+          expect($rootScope.$$.listenerCount['abc']).toBe(1);
 
           log = '';
           listenerRemove();
           child.$emit('abc');
           child.$broadcast('abc');
           expect(log).toEqual('');
-          expect($rootScope.$$listenerCount['abc']).toBeUndefined();
+          expect($rootScope.$$.listenerCount['abc']).toBeUndefined();
         }));
 
 
-        it('should decrement ancestor $$listenerCount entries', inject(function($rootScope) {
+        it('should decrement ancestor $$.listenerCount entries', inject(function($rootScope) {
           var child1 = $rootScope.$new(),
               child2 = child1.$new(),
               spy = jasmine.createSpy();
 
           $rootScope.$on('event1', spy);
-          expect($rootScope.$$listenerCount).toEqual({event1: 1});
+          expect($rootScope.$$.listenerCount).toEqual({event1: 1});
 
           child1.$on('event1', spy);
-          expect($rootScope.$$listenerCount).toEqual({event1: 2});
-          expect(child1.$$listenerCount).toEqual({event1: 1});
+          expect($rootScope.$$.listenerCount).toEqual({event1: 2});
+          expect(child1.$$.listenerCount).toEqual({event1: 1});
 
           var deregisterEvent2Listener = child2.$on('event2', spy);
-          expect($rootScope.$$listenerCount).toEqual({event1: 2, event2: 1});
-          expect(child1.$$listenerCount).toEqual({event1: 1, event2: 1});
-          expect(child2.$$listenerCount).toEqual({event2: 1});
+          expect($rootScope.$$.listenerCount).toEqual({event1: 2, event2: 1});
+          expect(child1.$$.listenerCount).toEqual({event1: 1, event2: 1});
+          expect(child2.$$.listenerCount).toEqual({event2: 1});
 
           deregisterEvent2Listener();
 
-          expect($rootScope.$$listenerCount).toEqual({event1: 2});
-          expect(child1.$$listenerCount).toEqual({event1: 1});
-          expect(child2.$$listenerCount).toEqual({});
+          expect($rootScope.$$.listenerCount).toEqual({event1: 2});
+          expect(child1.$$.listenerCount).toEqual({event1: 1});
+          expect(child2.$$.listenerCount).toEqual({});
         }));
       });
     });
@@ -1431,14 +1431,14 @@ describe('Scope', function() {
 
         spy1.andCallFake(remove1);
 
-        expect(child.$$listeners['evt'].length).toBe(3);
+        expect(child.$$.listeners['evt'].length).toBe(3);
 
         // should call all listeners and remove 1st
         child.$emit('evt');
         expect(spy1).toHaveBeenCalledOnce();
         expect(spy2).toHaveBeenCalledOnce();
         expect(spy3).toHaveBeenCalledOnce();
-        expect(child.$$listeners['evt'].length).toBe(3); // cleanup will happen on next $emit
+        expect(child.$$.listeners['evt'].length).toBe(3); // cleanup will happen on next $emit
 
         spy1.reset();
         spy2.reset();
@@ -1450,7 +1450,7 @@ describe('Scope', function() {
         expect(spy1).not.toHaveBeenCalled();
         expect(spy2).toHaveBeenCalledOnce();
         expect(spy3).not.toHaveBeenCalled();
-        expect(child.$$listeners['evt'].length).toBe(1);
+        expect(child.$$.listeners['evt'].length).toBe(1);
       });
 
 
@@ -1465,14 +1465,14 @@ describe('Scope', function() {
 
         spy1.andCallFake(remove1);
 
-        expect(child.$$listeners['evt'].length).toBe(3);
+        expect(child.$$.listeners['evt'].length).toBe(3);
 
         // should call all listeners and remove 1st
         child.$broadcast('evt');
         expect(spy1).toHaveBeenCalledOnce();
         expect(spy2).toHaveBeenCalledOnce();
         expect(spy3).toHaveBeenCalledOnce();
-        expect(child.$$listeners['evt'].length).toBe(3); //cleanup will happen on next $broadcast
+        expect(child.$$.listeners['evt'].length).toBe(3); //cleanup will happen on next $broadcast
 
         spy1.reset();
         spy2.reset();
@@ -1484,7 +1484,7 @@ describe('Scope', function() {
         expect(spy1).not.toHaveBeenCalled();
         expect(spy2).toHaveBeenCalledOnce();
         expect(spy3).not.toHaveBeenCalled();
-        expect(child.$$listeners['evt'].length).toBe(1);
+        expect(child.$$.listeners['evt'].length).toBe(1);
       });
 
 
@@ -1596,16 +1596,16 @@ describe('Scope', function() {
         }));
 
 
-        it('should not descend past scopes with a $$listerCount of 0 or undefined',
+        it('should not descend past scopes with a $$.listerCount of 0 or undefined',
             inject(function($rootScope) {
           var EVENT = 'fooEvent',
               spy = jasmine.createSpy('listener');
 
           // Precondition: There should be no listeners for fooEvent.
-          expect($rootScope.$$listenerCount[EVENT]).toBeUndefined();
+          expect($rootScope.$$.listenerCount[EVENT]).toBeUndefined();
 
           // Add a spy listener to a child scope.
-          $rootScope.$$childHead.$$listeners[EVENT] = [spy];
+          $rootScope.$$.childHead.$$.listeners[EVENT] = [spy];
 
           // $rootScope's count for 'fooEvent' is undefined, so spy should not be called.
           $rootScope.$broadcast(EVENT);

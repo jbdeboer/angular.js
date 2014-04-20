@@ -359,22 +359,22 @@ describe('ngView', function() {
     inject(function($templateCache, $rootScope, $location) {
       $templateCache.put('tpl.html', [200, 'partial', {}]);
 
-      expect($rootScope.$$childHead).toBeNull();
-      expect($rootScope.$$childTail).toBeNull();
+      expect($rootScope.$$.childHead).toBeNull();
+      expect($rootScope.$$.childTail).toBeNull();
 
       $location.path('/foo');
       $rootScope.$digest();
 
       expect(element.text()).toBe('partial');
-      expect($rootScope.$$childHead).not.toBeNull();
-      expect($rootScope.$$childTail).not.toBeNull();
+      expect($rootScope.$$.childHead).not.toBeNull();
+      expect($rootScope.$$.childTail).not.toBeNull();
 
       $location.path('/non/existing/route');
       $rootScope.$digest();
 
       expect(element.text()).toBe('');
-      expect($rootScope.$$childHead).toBeNull();
-      expect($rootScope.$$childTail).toBeNull();
+      expect($rootScope.$$.childHead).toBeNull();
+      expect($rootScope.$$.childTail).toBeNull();
     });
   });
 
@@ -413,8 +413,8 @@ describe('ngView', function() {
       expect(element.text()).toBe('');
       expect(log).toEqual(['init-ctrl2', 'destroy-ctrl2']);
 
-      expect($rootScope.$$childHead).toBeNull();
-      expect($rootScope.$$childTail).toBeNull();
+      expect($rootScope.$$.childHead).toBeNull();
+      expect($rootScope.$$.childTail).toBeNull();
     });
   });
 

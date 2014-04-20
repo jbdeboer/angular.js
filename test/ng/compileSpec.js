@@ -2697,7 +2697,7 @@ describe('$compile', function() {
             toThrowMinErr("$compile", "nonassign", "Expression ''hello ' + name' used with directive 'myComponent' is non-assignable!");
         expect(componentScope.ref).toBe('hello world');
         // reset since the exception was rethrown which prevented phase clearing
-        $rootScope.$$phase = null;
+        $rootScope.$$.phase = null;
 
         $rootScope.name = 'misko';
         $rootScope.$apply();
@@ -2829,18 +2829,18 @@ describe('$compile', function() {
       }).toThrowMinErr("$compile", "iscp", "Invalid isolate scope definition for directive 'badDeclaration'. Definition: {... attr: 'xxx' ...}");
     }));
 
-    it('should expose a $$isolateBindings property onto the scope', inject(function() {
+    it('should expose a $$.isolateBindings property onto the scope', inject(function() {
       compile('<div><span my-component>');
 
-      expect(typeof componentScope.$$isolateBindings).toBe('object');
+      expect(typeof componentScope.$$.isolateBindings).toBe('object');
 
-      expect(componentScope.$$isolateBindings.attr).toBe('@attr');
-      expect(componentScope.$$isolateBindings.attrAlias).toBe('@attr');
-      expect(componentScope.$$isolateBindings.ref).toBe('=ref');
-      expect(componentScope.$$isolateBindings.refAlias).toBe('=ref');
-      expect(componentScope.$$isolateBindings.reference).toBe('=reference');
-      expect(componentScope.$$isolateBindings.expr).toBe('&expr');
-      expect(componentScope.$$isolateBindings.exprAlias).toBe('&expr');
+      expect(componentScope.$$.isolateBindings.attr).toBe('@attr');
+      expect(componentScope.$$.isolateBindings.attrAlias).toBe('@attr');
+      expect(componentScope.$$.isolateBindings.ref).toBe('=ref');
+      expect(componentScope.$$.isolateBindings.refAlias).toBe('=ref');
+      expect(componentScope.$$.isolateBindings.reference).toBe('=reference');
+      expect(componentScope.$$.isolateBindings.expr).toBe('&expr');
+      expect(componentScope.$$.isolateBindings.exprAlias).toBe('&expr');
 
     }));
   });
@@ -3636,8 +3636,8 @@ describe('$compile', function() {
           $rootScope.$apply();
           expect(element.text()).toEqual('Hello: Misko!user: Misko');
 
-          var widgetScope = $rootScope.$$childHead;
-          var transcludeScope = widgetScope.$$nextSibling;
+          var widgetScope = $rootScope.$$.childHead;
+          var transcludeScope = widgetScope.$$.nextSibling;
           expect(widgetScope.name).toEqual('Misko');
           expect(widgetScope.$parent).toEqual($rootScope);
           expect(transcludeScope.$parent).toEqual($rootScope);
@@ -3645,7 +3645,7 @@ describe('$compile', function() {
           $rootScope.select = false;
           $rootScope.$apply();
           expect(element.text()).toEqual('Hello: Misko!');
-          expect(widgetScope.$$nextSibling).toEqual(null);
+          expect(widgetScope.$$.nextSibling).toEqual(null);
         });
       });
 

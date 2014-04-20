@@ -176,7 +176,7 @@ describe('ngInclude', function() {
     $rootScope.url = 'url2';
     $rootScope.$digest();
     $httpBackend.flush();
-    expect($rootScope.$$childHead).toBeFalsy();
+    expect($rootScope.$$.childHead).toBeFalsy();
     expect(element.text()).toBe('');
 
     $rootScope.url = 'url1';
@@ -185,7 +185,7 @@ describe('ngInclude', function() {
 
     $rootScope.url = null;
     $rootScope.$digest();
-    expect($rootScope.$$childHead).toBeFalsy();
+    expect($rootScope.$$.childHead).toBeFalsy();
   }));
 
 

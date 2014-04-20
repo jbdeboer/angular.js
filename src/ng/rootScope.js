@@ -82,7 +82,7 @@ function $RootScopeProvider(){
   this.$get = ['$injector', '$exceptionHandler', '$parse', '$browser',
       function( $injector,   $exceptionHandler,   $parse,   $browser) {
 
-    /**
+       /**
      * @ngdoc type
      * @name $rootScope.Scope
      *
@@ -124,16 +124,9 @@ function $RootScopeProvider(){
      */
     function Scope() {
       this.$id = nextUid();
-      this.$$phase = this.$parent = this.$$watchers =
-                     this.$$nextSibling = this.$$prevSibling =
-                     this.$$childHead = this.$$childTail = null;
+      this.$parent = null;
+      this.$$ = internalBookkeeping();
       this['this'] = this.$root =  this;
-      this.$$destroyed = false;
-      this.$$asyncQueue = [];
-      this.$$postDigestQueue = [];
-      this.$$listeners = {};
-      this.$$listenerCount = {};
-      this.$$isolateBindings = {};
     }
 
     /**
@@ -177,9 +170,6 @@ function $RootScopeProvider(){
         if (isolate) {
           child = new Scope();
           child.$root = this.$root;
-          // ensure that there is just one async queue per $rootScope and its children
-          child.$$asyncQueue = this.$$asyncQueue;
-          child.$$postDigestQueue = this.$$postDigestQueue;
         } else {
           ChildScope = function() {}; // should be anonymous; This is so that when the minifier munges
             // the name it does not become random set of chars. This will then show up as class
@@ -189,17 +179,19 @@ function $RootScopeProvider(){
           child.$id = nextUid();
         }
         child['this'] = child;
-        child.$$listeners = {};
-        child.$$listenerCount = {};
+        child.$$ = internalBookkeeping();
         child.$parent = this;
-        child.$$watchers = child.$$nextSibling = child.$$childHead = child.$$childTail = null;
-        child.$$prevSibling = this.$$childTail;
-        if (this.$$childHead) {
-          this.$$childTail.$$nextSibling = child;
-          this.$$childTail = child;
+        child.$$.prevSibling = this.$$.childTail;
+        if (this.$$.childHead) {
+          this.$$.childTail.$$.nextSibling = child;
+          this.$$.childTail = child;
         } else {
-          this.$$childHead = this.$$childTail = child;
+          this.$$.childHead = this.$$.childTail = child;
         }
+        // ensure that there is just one async queue per $rootScope and its children
+        child.$$.asyncQueue = this.$$.asyncQueue;
+        child.$$.postDigestQueue = this.$$.postDigestQueue;
+        
         return child;
       },
 
@@ -316,7 +308,7 @@ function $RootScopeProvider(){
       $watch: function(watchExp, listener, objectEquality) {
         var scope = this,
             get = compileToFn(watchExp, 'watch'),
-            array = scope.$$watchers,
+            array = scope.$$.watchers,
             watcher = {
               fn: listener,
               last: initWatchVal,
@@ -342,7 +334,7 @@ function $RootScopeProvider(){
         }
 
         if (!array) {
-          array = scope.$$watchers = [];
+          array = scope.$$.watchers = [];
         }
         // we use unshift since we use a while loop in $digest for speed.
         // the while loop reads in reverse order.
@@ -581,8 +573,8 @@ function $RootScopeProvider(){
       $digest: function() {
         var watch, value, last,
             watchers,
-            asyncQueue = this.$$asyncQueue,
-            postDigestQueue = this.$$postDigestQueue,
+            asyncQueue = this.$$.asyncQueue,
+            postDigestQueue = this.$$.postDigestQueue,
             length,
             dirty, ttl = TTL,
             next, current, target = this,
@@ -610,7 +602,7 @@ function $RootScopeProvider(){
 
           traverseScopesLoop:
           do { // "traverse the scopes" loop
-            if ((watchers = current.$$watchers)) {
+            if ((watchers = current.$$.watchers)) {
               // process our watches
               length = watchers.length;
               while (length--) {
@@ -654,9 +646,9 @@ function $RootScopeProvider(){
             // Insanity Warning: scope depth-first traversal
             // yes, this code is a bit crazy, but it works and we have tests to prove it!
             // this piece should be kept in sync with the traversal in $broadcast
-            if (!(next = (current.$$childHead ||
-                (current !== target && current.$$nextSibling)))) {
-              while(current !== target && !(next = current.$$nextSibling)) {
+            if (!(next = (current.$$.childHead ||
+                (current !== target && current.$$.nextSibling)))) {
+              while(current !== target && !(next = current.$$.nextSibling)) {
                 current = current.$parent;
               }
             }
@@ -721,22 +713,24 @@ function $RootScopeProvider(){
        * clean up DOM bindings before an element is removed from the DOM.
        */
       $destroy: function() {
+        var this$$ = this.$$;
         // we can't destroy the root scope or a scope that has been already destroyed
-        if (this.$$destroyed) return;
+        if (this$$.destroyed) return;
         var parent = this.$parent;
 
         this.$broadcast('$destroy');
-        this.$$destroyed = true;
+        this$$.destroyed = true;
         if (this === $rootScope) return;
 
-        forEach(this.$$listenerCount, bind(null, decrementListenerCount, this));
+        forEach(this$$.listenerCount, bind(null, decrementListenerCount, this));
 
+        var parent$$ = parent.$$;
         // sever all the references to parent scopes (after this cleanup, the current scope should
         // not be retained by any of our references and should be eligible for garbage collection)
-        if (parent.$$childHead == this) parent.$$childHead = this.$$nextSibling;
-        if (parent.$$childTail == this) parent.$$childTail = this.$$prevSibling;
-        if (this.$$prevSibling) this.$$prevSibling.$$nextSibling = this.$$nextSibling;
-        if (this.$$nextSibling) this.$$nextSibling.$$prevSibling = this.$$prevSibling;
+        if (parent$$.childHead == this) parent$$.childHead = this$$.nextSibling;
+        if (parent$$.childTail == this) parent$$.childTail = this$$.prevSibling;
+        if (this$$.prevSibling) this$$.prevSibling.$$.nextSibling = this$$.nextSibling;
+        if (this$$.nextSibling) this$$.nextSibling.$$.prevSibling = this$$.prevSibling;
 
 
         // All of the code below is bogus code that works around V8's memory leak via optimized code
@@ -747,12 +741,12 @@ function $RootScopeProvider(){
         // - https://github.com/angular/angular.js/issues/6794#issuecomment-38648909
         // - https://github.com/angular/angular.js/issues/1313#issuecomment-10378451
 
-        this.$parent = this.$$nextSibling = this.$$prevSibling = this.$$childHead =
-            this.$$childTail = this.$root = null;
+        this.$parent = this$$.nextSibling = this$$.prevSibling = this$$.childHead =
+            this$$.childTail = this.$root = null;
 
         // don't reset these to null in case some async task tries to register a listener/watch/task
-        this.$$listeners = {};
-        this.$$watchers = this.$$asyncQueue = this.$$postDigestQueue = [];
+        this$$.listeners = {};
+        this$$.watchers = this$$.asyncQueue = this$$.postDigestQueue = [];
 
         // prevent NPEs since these methods have references to properties we nulled out
         this.$destroy = this.$digest = this.$apply = noop;
@@ -823,19 +817,19 @@ function $RootScopeProvider(){
       $evalAsync: function(expr) {
         // if we are outside of an $digest loop and this is the first time we are scheduling async
         // task also schedule async auto-flush
-        if (!$rootScope.$$phase && !$rootScope.$$asyncQueue.length) {
+        if (!$rootScope.$$.phase && !$rootScope.$$.asyncQueue.length) {
           $browser.defer(function() {
-            if ($rootScope.$$asyncQueue.length) {
+            if ($rootScope.$$.asyncQueue.length) {
               $rootScope.$digest();
             }
           });
         }
 
-        this.$$asyncQueue.push({scope: this, expression: expr});
+        this.$$.asyncQueue.push({scope: this, expression: expr});
       },
 
       $$postDigest : function(fn) {
-        this.$$postDigestQueue.push(fn);
+        this.$$.postDigestQueue.push(fn);
       },
 
       /**
@@ -927,18 +921,18 @@ function $RootScopeProvider(){
        * @returns {function()} Returns a deregistration function for this listener.
        */
       $on: function(name, listener) {
-        var namedListeners = this.$$listeners[name];
+        var namedListeners = this.$$.listeners[name];
         if (!namedListeners) {
-          this.$$listeners[name] = namedListeners = [];
+          this.$$.listeners[name] = namedListeners = [];
         }
         namedListeners.push(listener);
 
         var current = this;
         do {
-          if (!current.$$listenerCount[name]) {
-            current.$$listenerCount[name] = 0;
+          if (!current.$$.listenerCount[name]) {
+            current.$$.listenerCount[name] = 0;
           }
-          current.$$listenerCount[name]++;
+          current.$$.listenerCount[name]++;
         } while ((current = current.$parent));
 
         var self = this;
@@ -989,7 +983,7 @@ function $RootScopeProvider(){
             i, length;
 
         do {
-          namedListeners = scope.$$listeners[name] || empty;
+          namedListeners = scope.$$.listeners[name] || empty;
           event.currentScope = scope;
           for (i=0, length=namedListeners.length; i<length; i++) {
 
@@ -1056,7 +1050,7 @@ function $RootScopeProvider(){
         //down while you can, then up and next sibling or up and next sibling until back at root
         while ((current = next)) {
           event.currentScope = current;
-          listeners = current.$$listeners[name] || [];
+          listeners = current.$$.listeners[name] || [];
           for (i=0, length = listeners.length; i<length; i++) {
             // if listeners were deregistered, defragment the array
             if (!listeners[i]) {
@@ -1076,10 +1070,10 @@ function $RootScopeProvider(){
           // Insanity Warning: scope depth-first traversal
           // yes, this code is a bit crazy, but it works and we have tests to prove it!
           // this piece should be kept in sync with the traversal in $digest
-          // (though it differs due to having the extra check for $$listenerCount)
-          if (!(next = ((current.$$listenerCount[name] && current.$$childHead) ||
-              (current !== target && current.$$nextSibling)))) {
-            while(current !== target && !(next = current.$$nextSibling)) {
+          // (though it differs due to having the extra check for $$.listenerCount)
+          if (!(next = ((current.$$.listenerCount[name] && current.$$.childHead) ||
+              (current !== target && current.$$.nextSibling)))) {
+            while(current !== target && !(next = current.$$.nextSibling)) {
               current = current.$parent;
             }
           }
@@ -1095,15 +1089,15 @@ function $RootScopeProvider(){
 
 
     function beginPhase(phase) {
-      if ($rootScope.$$phase) {
-        throw $rootScopeMinErr('inprog', '{0} already in progress', $rootScope.$$phase);
+      if ($rootScope.$$.phase) {
+        throw $rootScopeMinErr('inprog', '{0} already in progress', $rootScope.$$.phase);
       }
 
-      $rootScope.$$phase = phase;
+      $rootScope.$$.phase = phase;
     }
 
     function clearPhase() {
-      $rootScope.$$phase = null;
+      $rootScope.$$.phase = null;
     }
 
     function compileToFn(exp, name) {
@@ -1114,10 +1108,10 @@ function $RootScopeProvider(){
 
     function decrementListenerCount(current, count, name) {
       do {
-        current.$$listenerCount[name] -= count;
+        current.$$.listenerCount[name] -= count;
 
-        if (current.$$listenerCount[name] === 0) {
-          delete current.$$listenerCount[name];
+        if (current.$$.listenerCount[name] === 0) {
+          delete current.$$.listenerCount[name];
         }
       } while ((current = current.$parent));
     }
@@ -1127,5 +1121,28 @@ function $RootScopeProvider(){
      * because it's unique we can easily tell it apart from other values
      */
     function initWatchVal() {}
+
+    /**
+     * Values attached to scope through an object to
+     * avoid expensive prototypical lookups.
+     */
+    function internalBookkeeping() {
+      return {
+        phase: null,
+        watchers: null,
+        nextSibling: null,
+        prevSibling: null,
+        childHead: null,
+        childTail: null,
+        destroyed: false,
+        asyncQueue: [],
+        postDigestQueue: [],
+        listeners: {},
+        listenerCount: {},
+        isolateBinders: {}
+      }
+    }
+
+
   }];
 }
