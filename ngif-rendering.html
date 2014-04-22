@@ -1,0 +1,105 @@
+<!doctype html>
+<html ng-app="test">
+<head>
+  <script src="../io/bp/bp.js"></script>
+  <script src="./build/angular.js"></script>
+  <script>
+
+  var compiledTemplate;
+  var mod = angular.module('test', []);
+  mod.directive('tree', function($compile) {
+    return {
+        transclude: 'true',
+        scope: {
+            'data': '=tree'
+        },
+        template: '<span>{{data.value}} ' +
+            '<span ng-if="data.nextRight" ng-init="data = data.nextRight"><span ng-transclude></span></span>' +
+            '<span ng-if="data.nextLeft" ng-init="data = data.nextLeft"><span ng-transclude></span></span>' +
+            '</span>'
+    };
+  });
+
+  
+  mod.controller('InitCtrl', function($scope) {
+    var me = this;
+
+    
+    var maxDepth = this.maxDepth = 9;
+    this.values = ["a", "b", "c", "d", "e",
+                  "f", "g", "h", "X", "j", "4", "7"];
+    function buildData(depth) {
+      if (depth == maxDepth) return {};
+      return {
+        value: me.values[depth],
+        nextRight: buildData(depth + 1),
+        nextLeft: buildData(depth + 1)
+      }
+    }
+    this.data2 = buildData(0);
+
+    benchmarkSteps.push({
+      name: "cleanup",
+      fn: function cleanup() {
+        me.data = {};
+        
+        $scope.$apply();
+      } });
+
+    var count = 0;
+    benchmarkSteps.push({
+      name: "createDom",
+      fn: function createDom() {
+       
+        me.values = count++ % 2 == 0 ?
+            ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '*'] :
+            ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', '-'];
+        
+        me.data = buildData(0);
+        
+
+        $scope.$apply();      
+      }
+    });
+  });
+  </script>
+</head>
+<body ng-controller="InitCtrl as init">
+<div id="benchmarkContainer"></div>
+<p>
+Will render a tree 2^{{init.maxDepth}} in prefix order.
+</p>
+<!-- Since AngularJS 1.3 does not support recursive directives,
+    unroll the tree structure here. -->
+<span tree=init.data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+      
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+</span> 
+
+   
+</body>
+
+</html>
