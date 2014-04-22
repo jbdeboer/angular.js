@@ -1,0 +1,145 @@
+<!doctype html>
+<html ng-app="test">
+<head>
+  <script src="./build/angular.js"></script>
+  <script>
+  var benchmarkSteps = [];
+
+  var compiledTemplate;
+  var mod = angular.module('test', []);
+  mod.directive('tree', function($compile) {
+    return {
+        transclude: 'true',
+        scope: {
+            'data': '=tree'
+        },
+        template: '<span>{{data.value}} ' +
+            '<span ng-if="data.nextRight" ng-init="data = data.nextRight"><span ng-transclude></span></span>' +
+            '<span ng-if="data.nextLeft" ng-init="data = data.nextLeft"><span ng-transclude></span></span>' +
+            '</span>'
+    };
+  });
+
+  
+  mod.controller('InitCtrl', function($scope) {
+    var me = this;
+
+    
+    var maxDepth = this.maxDepth = 9;
+    this.values = ["a", "b", "c", "d", "e",
+                  "f", "g", "h", "X", "j", "4", "7"];
+    function buildData(depth) {
+      if (depth == maxDepth) return {};
+      return {
+        value: me.values[depth],
+        nextRight: buildData(depth + 1),
+        nextLeft: buildData(depth + 1)
+      }
+    }
+    this.data2 = buildData(0);
+
+    benchmarkSteps.push({
+      name: "cleanup",
+      fn: function cleanup() {
+        me.data = {};
+        
+        $scope.$apply();
+      } });
+
+    benchmarkSteps.push({
+      name: "createDom",
+      fn: function createDom() {
+       
+        me.values = [];
+        for (var i = 0; i < me.maxDepth; i++) {
+          me.values.push(Math.random() > 0.5 ? '|' : '-');
+        }
+        me.data = buildData(0);
+        
+
+        $scope.$apply();      
+      }
+    });
+  });
+  </script>
+</head>
+<body ng-controller="InitCtrl as init">
+<div id="benchmarkContainer"></div>
+<p>
+Will render a tree 2^{{init.maxDepth}} in in-fix order.
+</p>
+<!-- Since AngularJS 1.3 does not support recursive directives,
+    unroll the tree structure here. -->
+<span tree=init.data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+  <span tree=data>
+      
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+  </span>
+</span> 
+
+     <script>
+  // Benchmark runner
+  var btn = document.createElement('button');
+  btn.innerText = "Pause";
+  var running = false;
+  btn.addEventListener('click', toggleBenchmark);
+  var container = document.querySelector('#benchmarkContainer');
+  container.appendChild(btn);
+
+  var infoDiv = document.createElement('div');
+  container.appendChild(infoDiv);
+
+  function toggleBenchmark() {
+    if (running) {
+      btn.innerText = "Go";
+      running = false;
+    } else {
+      btn.innerHtml = "Pause";
+      running = true;
+      window.requestAnimationFrame(runBenchmarkSteps);
+    }
+  }
+
+  var runBenchmarkSteps;
+  runBenchmarkSteps = function() {
+    if (!running) return;
+    // Run all the steps;
+    var times = [];
+    benchmarkSteps.forEach(function(bs) {
+      var startTime = window.performance.now();
+      bs.fn();
+      var delta = window.performance.now() - startTime;
+      times.push(bs.name + ':' + ('' + delta).substr(0,5));
+    });
+    infoDiv.innerText = times.join(' ');
+
+    //console.log('hello');
+    window.requestAnimationFrame(runBenchmarkSteps);
+  }
+  toggleBenchmark();
+
+  </script>
+</body>
+
+</html>
